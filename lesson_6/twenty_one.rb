@@ -1,4 +1,4 @@
-SUITS = ['Hearts', 'Diamonds', 'Spades', 'Clubs']
+SUITS = [:Hearts, :Diamonds, :Spades, :Clubs]
 VALUES = [
   '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace'
 ]
@@ -31,25 +31,38 @@ def prompt(msg)
 end
 
 def initialize_deck
-  SUITS.product(VALUES).shuffle
+	array = []
+	SUITS.product(VALUES).each do |card|
+		hash = {}
+		hash[:suit] = card[0]
+		hash[:value] = card[1]
+		case card[1]
+		when "Ace" then hash[:points] = 11
+		when "Jack", "Queen", "King" then hash[:points] = 10 
+		else hash[:points] = card[1].to_i
+		end
+		array << hash
+	end 
+	array.shuffle
 end
 
-def initial_deal(player_cards, dealer_cards, deck)
+def initial_deal(player_cards, dealer_cards, deck)  
   2.times do
-    player_cards << deck.pop
-    dealer_cards << deck.pop
+    player_cards << deck.pop 
+    dealer_cards << deck.pop  
   end
 end
 
 def display_initial_hand(dealer_cards, player_cards)
-  prompt "Dealer has a #{dealer_cards[0][1]} of #{dealer_cards[0][0]} showing."
+  prompt "Dealer has a #{dealer_cards[0][:value]} of #{dealer_cards[0][:suit]} showing." 
   prompt "You have:"
-  player_cards.each { |card| prompt "#{card[1]} of #{card[0]}" }
-  prompt "#{total(player_cards)} Total"
-end
+  player_cards.each { |card| prompt "#{card[:value]} of #{card[:suit]}" }
+  prompt "#{total(player_cards)} Total"                       
+end                                     
 
-def account_for_aces(values, sum)
-  num = values.count("Ace")
+def account_for_aces(values)
+  num = values.count(11)
+  sum = values.sum          
   num.times do
     sum -= 10 if sum > BLACKJACK
   end
@@ -57,16 +70,8 @@ def account_for_aces(values, sum)
 end
 
 def total(cards)
-  sum = 0
-  values = cards.map { |card| card[1] }
-  values.each do |value|
-    case value
-    when 'Ace' then sum += 11
-    when 'Jack', 'Queen', 'King' then sum += 10
-    else sum += value.to_i
-    end
-  end
-  account_for_aces(values, sum)
+  values = cards.map { |card| card[:points] } 
+  account_for_aces(values)
 end
 
 def hit_or_stay?
@@ -80,17 +85,30 @@ def hit_or_stay?
   move
 end
 
-def deal_card!(cards, deck)
+def player_hits(player_cards, dealer_cards, deck) 
+	clear_screen
+  prompt "You Hit!"
+  deal_card!(player_cards, deck)
+  display_initial_hand(dealer_cards, player_cards)
+end
+
+def player_stays(player_cards)
+	clear_screen
+  prompt "Your Staying!"
+  display_player_cards(player_cards)
+end 
+
+def deal_card!(cards, deck)  ### do we change this to accommodate hash????  not too sure 
   cards << deck.pop
 end
 
 def display_player_cards(player_cards)
   prompt "PlayerCards:"
-  player_cards.each { |card| prompt "#{card[1]} of #{card[0]}" }
-  prompt "#{total(player_cards)} Total"
+  player_cards.each { |card| prompt "#{card[:value]} of #{card[:suit]}" } 
+  prompt "#{total(player_cards)} Total"                          
 end
 
-def display_stay_or_hit(dealer_cards)
+def display_stay_or_hit(dealer_cards)   
   play = dealer_cards.size
   case play
   when 2 then puts "Dealer stays..."
@@ -102,15 +120,15 @@ def display_stay_or_hit(dealer_cards)
 end
 
 def display_dealer_cards(dealer_cards)
-  display_stay_or_hit(dealer_cards)
+  display_stay_or_hit(dealer_cards) 
   puts " "
   prompt "Dealer Cards:"
-  dealer_cards.each { |card| prompt "#{card[1]} of #{card[0]}" }
+  dealer_cards.each { |card| prompt "#{card[:value]} of #{card[:suit]}" }  
   prompt "#{total(dealer_cards)} Total"
 end
 
-def busts?(total)
-  total > BLACKJACK
+def busts?(total) 
+  total > BLACKJACK 
 end
 
 def player_busts?(total)
@@ -131,15 +149,10 @@ def player_turn(player_cards, dealer_cards, deck)
   loop do
     case hit_or_stay?
     when 'h'
-      clear_screen
-      prompt "You Hit!"
-      deal_card!(player_cards, deck)
-      display_initial_hand(dealer_cards, player_cards)
+      player_hits(player_cards, dealer_cards, deck)
       break if total(player_cards) > BLACKJACK
     when 's'
-      clear_screen
-      prompt "Your Staying!"
-      display_player_cards(player_cards)
+      player_stays(player_cards)
       break
     end
   end
@@ -147,7 +160,7 @@ end
 
 def dealer_turn(dealer_cards, deck, player_total)
   clear_screen
-  display_player_total(player_total)
+  display_player_total(player_total) 
   while total(dealer_cards) < DEALER_MIN
     deal_card!(dealer_cards, deck)
     break if total(dealer_cards) > BLACKJACK
