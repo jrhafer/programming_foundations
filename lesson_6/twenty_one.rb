@@ -18,7 +18,7 @@ def welcome
   puts " "
   puts "Good Luck!"
   puts " "
-  puts "Press 'c' to continue."
+  puts "Enter 'c' to continue."
   gets.chomp
 end
 
